@@ -1,42 +1,54 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function VerifyContent() {
   const [status, setStatus] = useState("verifying");
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     const verifyEmail = async () => {
-      const token = searchParams.get("token");
-      const type = searchParams.get("type");
+      try {
+        console.log("Verification: Starting email verification...");
 
-      if (!token || type !== "email") {
+        // Process Supabase magic link and get session
+        const { data, error } = await supabase.auth.getSessionFromUrl({
+          storeSession: true
+        });
+
+        if (error) {
+          console.error("Verification error:", error);
+          setStatus("error");
+          return;
+        }
+
+        console.log("Verification data:", data);
+
+        if (data.session?.user) {
+          console.log("User verified:", data.session.user.email);
+
+          // Ensure session is properly stored by setting it explicitly
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          });
+
+          // Force a page reload to ensure session is properly stored
+          window.location.href = "/dashboard";
+        } else {
+          console.log("No session found after verification");
+          setStatus("error");
+        }
+      } catch (err) {
+        console.error("Verification error:", err);
         setStatus("error");
-        return;
-      }
-
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: "email",
-      });
-
-      if (error) {
-        setStatus("error");
-      } else {
-        setStatus("success");
-        // Redirect to login after a short delay
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
       }
     };
 
     verifyEmail();
-  }, [searchParams, router]);
+  }, []);
 
   return (
     <main className="min-h-screen bg-ink flex flex-col items-center justify-center p-6">
@@ -65,10 +77,10 @@ export default function VerifyContent() {
                 Email Verified!
               </h1>
               <p className="text-muted2 text-sm mb-6">
-                Your account has been successfully verified. You can now log in.
+                Your account has been successfully verified. Redirecting to your dashboard.
               </p>
               <p className="text-muted2 text-xs">
-                Redirecting to login page...
+                If you are not redirected, <Link href="/login" className="text-lime hover:underline">click here to login</Link>.
               </p>
             </>
           )}

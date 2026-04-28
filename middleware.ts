@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -36,15 +36,26 @@ export async function middleware(request: NextRequest) {
   )
 
   // 2. Check Authentication Session
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session }, error } = await supabase.auth.getSession()
+  console.log("Middleware: Checking session for path:", request.nextUrl.pathname, "Session exists:", !!session, "User:", session?.user?.email, "Error:", error); // Debug log
 
   // 3. Protection Logic (PRD Section 04)
   const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
   const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
+  const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
+                     request.nextUrl.pathname.startsWith('/signup') ||
+                     request.nextUrl.pathname.startsWith('/auth/verify')
 
   // If trying to access protected pages without being logged in
-  if ((isDashboardPage || isAdminPage) && !user) {
+  if ((isDashboardPage || isAdminPage) && !session?.user) {
+    console.log("Middleware: No session found, redirecting to login"); // Debug log
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // If trying to access auth pages while already logged in, redirect to dashboard
+  if (isAuthPage && session?.user) {
+    console.log("Middleware: User already authenticated, redirecting to dashboard"); // Debug log
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return response

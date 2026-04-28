@@ -1,10 +1,15 @@
 "use client";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import AuthForm from "@/components/AuthForm";
 import Link from "next/link";
 import { Suspense } from "react";
 
 function SignupContent() {
+  const router = useRouter();
+  const setPlan = (plan: string) => {
+    router.replace(`?plan=${plan}`);
+  };
   const searchParams = useSearchParams();
   const selectedPlan = searchParams.get("plan") || "monthly";
 
@@ -31,7 +36,8 @@ function SignupContent() {
 
           {/* Plan Selection Summary - PRD Section 04 */}
           <div className="grid grid-cols-2 gap-4 mb-10">
-            <div
+            <button
+              onClick={() => setPlan("monthly")}
               className={`p-4 rounded-xl border-2 transition-all ${selectedPlan === "monthly" ? "border-lime bg-lime/5" : "border-border"}`}
             >
               <p className="text-[10px] uppercase font-bold text-muted2">
@@ -40,8 +46,9 @@ function SignupContent() {
               <p className="text-xl font-bold">
                 £9<span className="text-xs">/mo</span>
               </p>
-            </div>
-            <div
+            </button>
+            <button
+              onClick={() => setPlan("yearly")}
               className={`p-4 rounded-xl border-2 transition-all ${selectedPlan === "yearly" ? "border-lime bg-lime/5" : "border-border"}`}
             >
               <div className="flex justify-between items-start">
@@ -55,7 +62,7 @@ function SignupContent() {
               <p className="text-xl font-bold">
                 £79<span className="text-xs">/yr</span>
               </p>
-            </div>
+            </button>
           </div>
 
           {/* Reusing AuthForm with a 'signup' mode */}
