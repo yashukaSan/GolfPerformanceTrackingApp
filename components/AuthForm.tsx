@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {Eye, EyeClosed} from 'lucide-react';
+import { Eye, EyeOff } from "lucide-react"; // ✅ FIX: EyeClosed doesn't exist in lucide-react — use EyeOff
 
 interface AuthFormProps {
   mode?: "login" | "signup";
@@ -34,9 +34,10 @@ export default function AuthForm({ mode = "login" }: AuthFormProps) {
           },
         });
         if (error) {
-          // Check if email is already registered
-          if (error.message.toLowerCase().includes("already registered") || 
-              error.message.toLowerCase().includes("already signed up")) {
+          if (
+            error.message.toLowerCase().includes("already registered") ||
+            error.message.toLowerCase().includes("already signed up")
+          ) {
             setError("This email is already registered. Please log in instead.");
           } else {
             throw error;
@@ -51,7 +52,8 @@ export default function AuthForm({ mode = "login" }: AuthFormProps) {
           password,
         });
         if (error) throw error;
-        router.push("/dashboard");
+        // ✅ FIX: was router.push — use replace so the back button doesn't return to login
+        router.replace("/dashboard");
       }
     } catch (err: any) {
       setError(err.message);
@@ -87,7 +89,9 @@ export default function AuthForm({ mode = "login" }: AuthFormProps) {
         <div className="space-y-4">
           <div className="p-4 bg-lime/10 border border-lime text-lime text-sm rounded-lg">
             <p className="font-bold mb-2">✓ Email sent!</p>
-            <p className="text-xs">Check your inbox for a verification link. Click it to confirm your account.</p>
+            <p className="text-xs">
+              Check your inbox for a verification link. Click it to confirm your account.
+            </p>
           </div>
           <button
             onClick={handleResend}
@@ -124,34 +128,36 @@ export default function AuthForm({ mode = "login" }: AuthFormProps) {
               type="email"
               required
               placeholder="hero@greendrop.com"
+              value={email}
               className="w-full bg-ink border border-border p-4 rounded-xl text-white focus:border-lime outline-none transition-all"
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
+          {/* ✅ FIX: Rewrote the password field — original had a broken outer white div wrapping
+              an inner dark input with double borders and an invalid `border-r-none` class.
+              Now uses a single clean container with proper icon placement. */}
           <div>
             <label className="text-[10px] uppercase tracking-widest text-muted2 mb-2 block font-bold">
               Password
             </label>
-            <div className=" flex justify-between items-center align-center w-full text-ink border border-border rounded-xl bg-white focus:border-lime outline-none transition-all">
+            <div className="relative flex items-center">
               <input
                 type={showPwd ? "text" : "password"}
                 required
                 placeholder="••••••••"
-                className="w-full bg-ink border border-r-none border-border p-4 rounded-xl text-white focus:border-lime outline-none transition-all"
+                value={password}
+                className="w-full bg-ink border border-border p-4 pr-12 rounded-xl text-white focus:border-lime outline-none transition-all"
                 onChange={(e) => setPassword(e.target.value)}
               />
-              {showPwd ? (
-                <Eye
-                  onClick={() => setShowPwd(false)}
-                  className=" bg-white text-black outline-none transition-all "
-                />
-              ) : (
-                <EyeClosed
-                  onClick={() => setShowPwd(true)}
-                  className=" bg-white outline-none text-black transition-all "
-                />
-              )}
+              <button
+                type="button"
+                onClick={() => setShowPwd((prev) => !prev)}
+                className="absolute right-4 text-muted2 hover:text-white transition-colors cursor-pointer"
+                aria-label={showPwd ? "Hide password" : "Show password"}
+              >
+                {showPwd ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
             </div>
           </div>
 
