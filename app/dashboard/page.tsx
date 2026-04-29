@@ -13,41 +13,50 @@ interface Score {
   id?: string;
 }
 
+// ✅ FIX: Calculate the next 1st of the month dynamically instead of hardcoding "May 1st, 2024"
+function getNextDrawDate(): string {
+  const now = new Date();
+  const nextDraw = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return nextDraw.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchScores = async (userId: string) => {
+    const { data: scoresData } = await supabase
+      .from("scores")
+      .select("*")
+      .eq("user_id", userId)
+      .order("score_date", { ascending: false })
+      .limit(5);
+    setScores(scoresData || []);
+  };
+
   useEffect(() => {
     const getDashboardData = async () => {
       try {
         setLoading(true);
 
-        // 1. Get the session
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession();
 
         if (error || !session) {
-          console.log("Dashboard: No active session found, redirecting...");
           router.replace("/login");
           return;
         }
 
-        // 2. Set user info
         setUser(session.user);
-
-        // 3. Fetch scores
-        const { data: scoresData } = await supabase
-          .from("scores")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .order("score_date", { ascending: false })
-          .limit(5);
-
-        setScores(scoresData || []);
+        await fetchScores(session.user.id);
       } catch (err) {
         console.error("Dashboard error:", err);
         router.replace("/login");
@@ -64,18 +73,14 @@ export default function Dashboard() {
     router.replace("/login");
   };
 
-  // While checking auth, show a neutral loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-ink flex items-center justify-center text-white">
-        <div className="animate-pulse font-syne text-xl">
-          Loading Hero Dashboard...
-        </div>
+        <div className="animate-pulse font-syne text-xl">Loading Hero Dashboard...</div>
       </div>
     );
   }
 
-  // If loading finished and user is still null, don't render anything (redirecting)
   if (!user) return null;
 
   return (
@@ -85,8 +90,7 @@ export default function Dashboard() {
         <div>
           <h1 className="font-syne text-4xl">Welcome back, Hero.</h1>
           <p className="text-muted2">
-            Status:{" "}
-            <span className="text-lime font-bold">Active Subscriber</span>
+            Status: <span className="text-lime font-bold">Active Subscriber</span>
           </p>
           <p className="text-xs text-muted2 mt-1">{user?.email}</p>
         </div>
@@ -99,7 +103,8 @@ export default function Dashboard() {
           </button>
           <div className="text-right">
             <p className="text-xs text-muted2">Next Draw</p>
-            <p className="font-bold">May 1st, 2024</p>
+            {/* ✅ FIX: Was hardcoded to "May 1st, 2024" — now computed dynamically */}
+            <p className="font-bold">{getNextDrawDate()}</p>
           </div>
         </div>
       </header>
@@ -109,7 +114,7 @@ export default function Dashboard() {
         <section>
           <ScoreCard
             existingScores={scores.map((s) => ({ value: s.score_value }))}
-            onScoreAdded={() => window.location.reload()}
+            onScoreAdded={() => user && fetchScores(user.id)}
           />
         </section>
 
