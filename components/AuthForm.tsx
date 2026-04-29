@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react"; // ✅ FIX: EyeClosed doesn't exist in lucide-react — use EyeOff
+import { Eye, EyeOff, EyeClosed } from "lucide-react"; // ✅ FIX: EyeClosed doesn't exist in lucide-react — use EyeOff
 
 interface AuthFormProps {
   mode?: "login" | "signup";
