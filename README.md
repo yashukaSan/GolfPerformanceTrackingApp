@@ -22,11 +22,14 @@
 
 1. **Clone & Install:**
    ```bash
+   npm clone https://github.com/yashukaSan/GolfPerformanceTrackingApp
    npm install
    ```
 
 2. **Environment Variables:**
-   Create a `.env.local` file in the root and add:
+   If you want to continue with the provided one just let it be
+   OR
+   If you want to use your API or key then, Alter the `.env.local` file in the root and replace default ones with yours:
    ```text
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -41,6 +44,7 @@
 
 4. **Run Locally:**
    ```bash
+   npm run build
    npm run dev
    ```
 
